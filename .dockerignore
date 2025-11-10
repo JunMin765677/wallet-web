@@ -1,0 +1,10 @@
+# 忽略本地依賴
+node_modules
+
+# 忽略 Nuxt 暫存檔案
+.nuxt
+.output
+dist
+
+# 忽略日誌檔案
+*.log

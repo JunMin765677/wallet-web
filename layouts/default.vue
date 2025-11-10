@@ -1,115 +1,100 @@
+<!-- layouts/default.vue -->
 <template>
-  <div class="app-container">
-    <header class="app-header">
-      <nav class="app-nav">
-        <NuxtLink to="/" class="nav-link">首頁</NuxtLink>
-        <NuxtLink to="/issuer" class="nav-link">簽發</NuxtLink>
-        <NuxtLink to="/verifier" class="nav-link">驗證</NuxtLink>
-        <NuxtLink to="/issuer-manage" class="nav-link">VC管理</NuxtLink>
-        <NuxtLink to="/verifier-manage" class="nav-link">驗證紀錄</NuxtLink>
-      </nav>
-    </header>
-    <main class="app-main">
+  <div class="screen">
+    <AppNav />
+
+    <main id="main" class="content">
       <slot />
     </main>
+
+    <footer class="foot">
+      <small>© {{ new Date().getFullYear() }} 暖心e證通</small>
+    </footer>
   </div>
 </template>
 
+<script setup lang="ts">
+// Nuxt 3 預設自動匯入 components，若有關掉 auto-import，請手動：
+// import AppNav from '~/components/AppNav.vue'
+</script>
+
 <style>
-/* 基本樣式重設 */
-body {
+:root{
+  /* 全域主題（低飽和、霧化、與 AppNav 共用變數） */
+  --font: 1.25rem;
+  --bg-mask: rgba(15, 23, 42, 0.28);
+  --glass: rgba(255,255,255,0.16);
+  --glass-strong: rgba(255,255,255,0.24);
+  --ink: #e8eef6;
+  --muted: rgba(232,238,246,0.75);
+
+  --edge-1: rgba(210, 255, 227, 0.8);
+  --edge-2: rgba(186, 201, 255, 0.3);
+  --edge-3: rgba(248, 249, 255, 0.5);
+
+  --brand-a: #86c5d6;
+  --brand-b: #f1c7b3;
+
+  --radius: 1.25rem;
+  --shadow: 0 20px 50px rgba(2, 6, 23, 0.25);
+  --ring: 0 0 0 3px rgba(134,197,214,.35);
+}
+
+html, body, #__nuxt { height: 100%; }
+body{
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  background-color: #f8f9fa;
-  color: #333;
+  font-family: 'Open Sans', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  color: var(--ink);
+
+  /* ✅ 使用可重複的背景圖 */
+  background-image: url('/bg.webp');
+  background-repeat: repeat;        /* 重複平鋪 */
+  background-position: top left;    /* 也可改成 center top */
+  background-size: auto;            /* 維持原圖大小 */
 }
 
-.app-container {
-  display: flex;
-  flex-direction: column;
+.screen{
   min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 1.25rem;
 }
 
-.app-header {
-  background-color: #fff;
-  border-bottom: 1px solid #e9ecef;
-  padding: 0 2rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+/* 內容容器（半透明卡片，與你原本頁面 slot 相容） */
+.content{
+  display: grid; place-items: stretch;
+  padding: 2rem 1.25rem 3rem;
+}
+/* ✅ 防溢出的安全版本 */
+.content > *:first-child,
+.content section {
+  margin: 0 auto;
+
+  /* 關鍵：讓 padding 計入寬度，避免在手機超出 */
+  box-sizing: border-box;
+
+  /* 寬度上限 1100px，平時撐滿容器，但不超過畫面 */
+  inline-size: min(100%, 1100px);
+
+  /* 內距用 clamp，手機不會太擠，桌機不會太寬鬆 */
+  padding: clamp(12px, 2.5vw, 20px);
+
+  /* 你原本的視覺樣式保留 */
+  /* background: linear-gradient(180deg, rgba(255, 255, 255, .14), rgba(255, 255, 255, .08));
+  border: 1px solid rgba(255, 255, 255, .18);
+  border-radius: calc(var(--radius) + .5rem);
+  box-shadow: var(--shadow); */
 }
 
-.app-nav {
-  display: flex;
-  align-items: center;
-  height: 60px;
-  gap: 1.5rem;
+/* 依螢幕調整外層 content 的左右邊距，避免貼邊 */
+@media (max-width: 480px) {
+  .content { padding-inline: 12px; }
 }
 
-.nav-link {
-  text-decoration: none;
-  color: #555;
-  font-weight: 500;
-  padding: 8px 12px;
-  border-radius: 6px;
-  transition: background-color 0.2s, color 0.2s;
-}
-
-.nav-link:hover {
-  background-color: #f1f3f5;
-}
-
-/* 使用 .router-link-active class 來標示當前頁面 */
-.nav-link.router-link-active {
-  background-color: #007bff;
-  color: #fff;
-}
-
-.app-main {
-  flex: 1;
-}
-
-/* 讓頁面內容的 section 有一些基本的 padding */
-section {
-  max-width: 860px;
-  margin: 32px auto;
-  padding: 1rem;
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-}
-
-/* 按鈕樣式美化 */
-button {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 10px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.2s, box-shadow 0.2s;
-}
-
-button:hover {
-  background-color: #0056b3;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-button:disabled {
-  background-color: #cdd5de;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-/* 輸入框樣式 */
-input {
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 1rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-input:focus {
-  outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+/* 頁腳 */
+.foot{
+  padding: 0 1.25rem 1.5rem;
+  color: var(--muted);
+  text-align: center;
 }
 </style>
