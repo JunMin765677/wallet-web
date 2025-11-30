@@ -47,5 +47,16 @@ ENV PORT=3000
 EXPOSE 3000
 
 # 容器啟動指令
+
+# 建一個非 root 的使用者
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+# 把程式檔案權限給這個使用者
+WORKDIR /app
+# 如果前面有 COPY . /app，記得確保權限
+# RUN chown -R appuser:appgroup /app
+
+# 之後的指令都用這個使用者跑
+USER appuser
 # 執行 .output/server/index.mjs
 CMD ["node", "./server/index.mjs"]
