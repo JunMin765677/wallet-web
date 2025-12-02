@@ -156,4 +156,10 @@ npm run build
 └── Loading.vue              # (共用) 模擬登入動畫
 
 nuxt.config.ts               # (環境變數在此設定)
+
+
+### 授權
+
+本專案採用 MIT 開源授權，詳細條款請見 LICENSE。
+
 ```
