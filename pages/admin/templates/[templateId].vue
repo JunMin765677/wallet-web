@@ -221,6 +221,23 @@ const selectedPersonForRevoke = ref<Person | null>(null);
 const isRevoking = ref(false); // 控制 Modal 的 loading
 const revokeError = ref<string | null>(null); // 儲存 API 錯誤
 
+// CSRF token 狀態與輔助函式
+const csrfToken = ref<string | null>(null);
+
+async function ensureCsrfToken(): Promise<string> {
+  if (csrfToken.value) return csrfToken.value;
+
+  const res = await $fetch<{ csrfToken: string }>('/api/csrf-token', {
+    method: 'GET',
+    credentials: 'include'
+  });
+  if (!res?.csrfToken) {
+    throw new Error('CSRF token 取得失敗');
+  }
+  csrfToken.value = res.csrfToken;
+  return csrfToken.value;
+}
+
 function openDetailModal(person: Person) {
   selectedPerson.value = person;
   isModalOpen.value = true;
@@ -299,12 +316,15 @@ async function handleConfirmRevoke(payload: { reason: string }) {
   try {
     // 呼叫 BE-3 API
     const url = `/api/v1/admin/eligibility/revoke`;
+    const csrf = await ensureCsrfToken();
     await $fetch(url, {
       method: 'POST',
+      credentials: 'include',
       body: {
         personId: selectedPersonForRevoke.value.personId,
         templateId: Number(templateId), // 確保是 Number
         reason: payload.reason || null, // 如果是空字串，傳送 null
+        csrfToken: csrf
       }
     });
 
@@ -312,14 +332,14 @@ async function handleConfirmRevoke(payload: { reason: string }) {
     isRevokeModalOpen.value = false;
     
     // 重新整理 (Refetch) 表格資料
-    await refresh(); 
-    
+    await refresh();
+
   } catch (err: any) {
     // 失敗
     console.error("註銷資格失敗:", err);
     // 將 API 錯誤訊息顯示在 Modal 內
     revokeError.value = err.response?._data?.message || '註銷時發生未預期的錯誤。';
-  
+
   } finally {
     isRevoking.value = false;
   }

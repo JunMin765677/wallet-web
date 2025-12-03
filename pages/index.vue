@@ -22,6 +22,22 @@ const apiDone = ref(false)            // API 是否完成
 const loadingDone = ref(false)        // Loading 是否完成
 let apiTemplatesBuffer: any[] | null = null // 先暫存 API 結果，等 Loading 結束再塞進畫面
 
+const csrfToken = ref<string | null>(null)
+
+async function ensureCsrfToken(): Promise<string> {
+  if (csrfToken.value) return csrfToken.value
+
+  const res = await $fetch<{ csrfToken: string }>('/api/csrf-token', {
+    method: 'GET',
+    credentials: 'include'
+  })
+  if (!res?.csrfToken) {
+    throw new Error('CSRF token 取得失敗')
+  }
+  csrfToken.value = res.csrfToken
+  return csrfToken.value
+}
+
 function resetAll() {
   errorMessage.value = null
   availableTemplates.value = []
@@ -112,9 +128,13 @@ async function startMockVerification(method: string) {
   try {
     // 開始後端請求（與 Loading 並行）
     const url = `/api/issuance/start-simulation`
+    const csrf = await ensureCsrfToken()
     const res = await $fetch<{ person: any; availableTemplates: any[] }>(url, {
       method: 'POST',
-      credentials: 'include'
+      credentials: 'include',
+      body: {
+        csrfToken: csrf
+      }
     })
     if (token !== opToken) return
     if (!res?.availableTemplates) throw new Error('API 回傳資料不正確')
@@ -137,10 +157,14 @@ async function handleSelectVC(templateId: string) {
   issuanceStatusMap.value.set(templateId, { status: 'loading' })
   try {
     const url = `/api/issuance/request-credential`
+    const csrf = await ensureCsrfToken()
     const res = await $fetch<any>(url, {
       method: 'POST',
       credentials: 'include',
-      body: { templateId }
+      body: {
+        templateId,
+        csrfToken: csrf
+      }
     })
     if (!res?.qrCode || !res?.transactionId) throw new Error('API 回傳資料不完整')
     issuanceStatusMap.value.set(templateId, {

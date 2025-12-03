@@ -1,6 +1,23 @@
 <script setup>
 import { onMounted, onBeforeUnmount, ref } from 'vue'
 
+let uidCounter = 0
+
+function generateSecureUid(): string {
+  // 優先使用 Web Crypto / Node Crypto 的 CSPRNG
+  const g = globalThis as any
+  if (g && g.crypto && typeof g.crypto.getRandomValues === 'function') {
+    const bytes = new Uint8Array(16)
+    g.crypto.getRandomValues(bytes)
+    return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('')
+  }
+
+  // 後備方案：時間戳 + 遞增計數，避免使用 Math.random()
+  const nowHex = Date.now().toString(16)
+  const counterHex = (++uidCounter).toString(16)
+  return nowHex + counterHex
+}
+
 // ========== Props ==========
 const props = defineProps({
   phrases: {
@@ -41,7 +58,7 @@ const props = defineProps({
 const emit = defineEmits(['done'])
 
 // ==== iOS/SVG 相容：所有 <defs> 內元素與動態注入的標籤，ID 都帶唯一前綴 ====
-const uid = Math.random().toString(36).slice(2)
+const uid = generateSecureUid()
 const phrasesGroupId = `phrases-${uid}`
 const maskId = `mask-${uid}`
 const gradId = `linearGradient-${uid}`

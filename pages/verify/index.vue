@@ -20,6 +20,21 @@ const selectedRole = ref<RoleOption | null>(null)
 const isLoading = ref(false)                     // 控制 API 請求 Loading（表單送出）
 const errorMessage = ref<string | null>(null)    // 全域錯誤訊息
 
+const csrfToken = ref<string | null>(null)
+
+async function ensureCsrfToken(): Promise<string> {
+  if (csrfToken.value) return csrfToken.value
+
+  const res = await $fetch<{ csrfToken: string }>('/api/csrf-token', {
+    method: 'GET',
+    credentials: 'include'
+  })
+  if (!res?.csrfToken) throw new Error('CSRF token 取得失敗')
+
+  csrfToken.value = res.csrfToken
+  return csrfToken.value
+}
+
 // (型別定義)
 type VerificationDetails =
   | ({
@@ -78,7 +93,15 @@ async function handleStartVerification(formData: {
 
   try {
     const url = `/api/verification/request-verification`
-    const response = await $fetch<any>(url, { method: 'POST', body: formData })
+    const csrf = await ensureCsrfToken()
+    const response = await $fetch<any>(url, {
+      method: 'POST',
+      credentials: 'include',
+      body: {
+        ...formData,
+        csrfToken: csrf
+      }
+    })
 
     if (!response.expiresAt) {
       throw new Error('API 回應格式錯誤: 缺少 "expiresAt" 欄位')
